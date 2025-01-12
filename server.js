@@ -563,7 +563,7 @@ Requirements:
 
     const text = completion.choices[0].message.content;
     logger.info('HTML generated successfully');
-    res.send(text);
+    res.json({ html: text });
   } catch (error) {
     logger.error('Error generating HTML:', error);
     res.status(500).json({ error: 'Failed to generate HTML' });
