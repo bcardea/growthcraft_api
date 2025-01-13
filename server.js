@@ -23,7 +23,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), handleStripe
 // Configure CORS with specific options
 app.use(cors({
   origin: [
-    'https://growthcraft.vercel.app',
+    'https://growthcraft.netlify.app',
     'http://localhost:5173', // For local development
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
