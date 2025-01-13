@@ -128,10 +128,10 @@ export async function handleStripeWebhook(req, res) {
         // Update subscription status
         const { error: updateError } = await supabase
           .rpc('update_user_subscription', {
-            user_id: userId,
-            subscription_id: subscription.id,
-            status: subscription.status,
-            period_end: new Date(subscription.current_period_end * 1000).toISOString()
+            p_user_id: userId,
+            p_subscription_id: subscription.id,
+            p_status: subscription.status,
+            p_period_end: new Date(subscription.current_period_end * 1000).toISOString()
           });
 
         if (updateError) {
@@ -156,10 +156,10 @@ export async function handleStripeWebhook(req, res) {
         // Update subscription status to inactive
         const { error: deleteError } = await supabase
           .rpc('update_user_subscription', {
-            user_id: deletedUserId,
-            subscription_id: null,
-            status: 'inactive',
-            period_end: null
+            p_user_id: deletedUserId,
+            p_subscription_id: null,
+            p_status: 'inactive',
+            p_period_end: null
           });
 
         if (deleteError) {
