@@ -15,20 +15,31 @@ export async function createCheckoutSession(req, res) {
     }
 
     logger.info('Creating checkout session for user:', { userId, priceId });
+    logger.info('Supabase config:', { 
+      url: process.env.VITE_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY
+    });
 
     // Get user from auth schema using RPC
+    logger.info('Calling get_user_details RPC with userId:', userId);
     let { data: user, error: userError } = await supabase
       .rpc('get_user_details', { user_id: userId });
 
     if (userError) {
       logger.error('Error fetching user:', userError);
-      return res.status(400).json({ error: 'Error fetching user' });
+      return res.status(400).json({ error: 'Error fetching user: ' + userError.message });
     }
 
     if (!user) {
       logger.error('User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
+
+    logger.info('User details retrieved:', { 
+      hasEmail: !!user.email,
+      hasStripeId: !!user.stripe_customer_id,
+      subscriptionStatus: user.subscription_status
+    });
 
     let customerId = user.stripe_customer_id;
 
@@ -41,8 +52,10 @@ export async function createCheckoutSession(req, res) {
         }
       });
       customerId = customer.id;
+      logger.info('Created Stripe customer:', customerId);
 
       // Update user with Stripe customer ID using RPC
+      logger.info('Updating user with Stripe customer ID');
       const { error: updateError } = await supabase
         .rpc('update_user_stripe_customer', { 
           user_id: userId, 
@@ -53,9 +66,11 @@ export async function createCheckoutSession(req, res) {
         logger.error('Error updating user with Stripe customer ID:', updateError);
         return res.status(500).json({ error: 'Error updating user' });
       }
+      logger.info('Successfully updated user with Stripe customer ID');
     }
 
     // Create checkout session
+    logger.info('Creating Stripe checkout session');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -74,7 +89,7 @@ export async function createCheckoutSession(req, res) {
     return res.json({ url: session.url });
   } catch (error) {
     logger.error('Error in createCheckoutSession:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
 }
 
