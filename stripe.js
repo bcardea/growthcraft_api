@@ -20,14 +20,10 @@ export async function createCheckoutSession(req, res) {
       hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY
     });
 
-    // Get user details from auth.users schema
+    // Get user details using raw SQL
     logger.info('Fetching user details for:', userId);
     const { data: users, error: userError } = await supabase
-      .schema('auth')
-      .from('users')
-      .select('email, stripe_customer_id, subscription_status, subscription_period_end')
-      .eq('id', userId)
-      .single();
+      .rpc('get_user_details', { user_id: userId });
 
     if (userError) {
       logger.error('Error fetching user:', userError);
@@ -59,13 +55,13 @@ export async function createCheckoutSession(req, res) {
       customerId = customer.id;
       logger.info('Created Stripe customer:', customerId);
 
-      // Update user with Stripe customer ID
+      // Update user with Stripe customer ID using raw SQL
       logger.info('Updating user with Stripe customer ID');
       const { error: updateError } = await supabase
-        .schema('auth')
-        .from('users')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', userId);
+        .rpc('update_user_stripe_customer', {
+          user_id: userId,
+          customer_id: customerId
+        });
 
       if (updateError) {
         logger.error('Error updating user with Stripe customer ID:', updateError);
@@ -129,16 +125,14 @@ export async function handleStripeWebhook(req, res) {
           return res.status(400).json({ error: 'No userId found' });
         }
 
-        // Update subscription status
+        // Update subscription status using raw SQL
         const { error: updateError } = await supabase
-          .schema('auth')
-          .from('users')
-          .update({
-            subscription_status: subscription.status,
-            subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            subscription_id: subscription.id
-          })
-          .eq('id', userId);
+          .rpc('update_user_subscription', {
+            user_id: userId,
+            subscription_id: subscription.id,
+            status: subscription.status,
+            period_end: new Date(subscription.current_period_end * 1000).toISOString()
+          });
 
         if (updateError) {
           logger.error('Error updating subscription status:', updateError);
@@ -159,16 +153,14 @@ export async function handleStripeWebhook(req, res) {
           return res.status(400).json({ error: 'No userId found' });
         }
 
-        // Update subscription status to inactive
+        // Update subscription status to inactive using raw SQL
         const { error: deleteError } = await supabase
-          .schema('auth')
-          .from('users')
-          .update({
-            subscription_status: 'inactive',
-            subscription_period_end: null,
-            subscription_id: null
-          })
-          .eq('id', deletedUserId);
+          .rpc('update_user_subscription', {
+            user_id: deletedUserId,
+            subscription_id: null,
+            status: 'inactive',
+            period_end: null
+          });
 
         if (deleteError) {
           logger.error('Error updating subscription status:', deleteError);
