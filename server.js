@@ -10,14 +10,22 @@ import Anthropic from '@anthropic-ai/sdk';
 // IMPORTANT: Use a namespace import for @google/generative-ai
 import * as generativeAi from '@google/generative-ai';
 import { logger, requestLogger } from './logger.js';
+import { createCheckoutSession, handleStripeWebhook } from './stripe.js';
 
 // Extract classes from the namespace
 const { GoogleGenerativeAI } = generativeAi;
 
 const app = express();
+
+// Stripe webhook needs raw body
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
+
+// Add Stripe endpoint
+app.post('/api/create-checkout-session', createCheckoutSession);
 
 // ------------------------------------------------------------------
 // 1. Initialize AI clients
