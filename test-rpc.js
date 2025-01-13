@@ -17,7 +17,7 @@ async function testRPC() {
       hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY
     });
 
-    const { data, error } = await supabase.rpc('public.get_user_details', {
+    const { data, error } = await supabase.rpc('get_user_details', {
       user_id: '29762657-13ef-40cc-8915-60a7d72c71f2'
     });
 

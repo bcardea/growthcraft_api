@@ -23,7 +23,7 @@ export async function createCheckoutSession(req, res) {
     // Get user details using RPC
     logger.info('Fetching user details for:', userId);
     const { data: user, error: userError } = await supabase
-      .rpc('public.get_user_details', { user_id: userId });
+      .rpc('get_user_details', { user_id: userId });
 
     if (userError) {
       logger.error('Error fetching user:', userError);
@@ -57,7 +57,7 @@ export async function createCheckoutSession(req, res) {
       // Update user with Stripe customer ID
       logger.info('Updating user with Stripe customer ID');
       const { error: updateError } = await supabase
-        .rpc('public.update_user_stripe_customer', {
+        .rpc('update_user_stripe_customer', {
           user_id: userId,
           customer_id: customerId
         });
@@ -127,7 +127,7 @@ export async function handleStripeWebhook(req, res) {
 
         // Update subscription status
         const { error: updateError } = await supabase
-          .rpc('public.update_user_subscription_v2', {
+          .rpc('update_user_subscription_v2', {
             p_user_id: userId,
             p_subscription_id: subscription.id,
             p_status: subscription.status,
@@ -155,7 +155,7 @@ export async function handleStripeWebhook(req, res) {
 
         // Update subscription status to inactive
         const { error: deleteError } = await supabase
-          .rpc('public.update_user_subscription_v2', {
+          .rpc('update_user_subscription_v2', {
             p_user_id: deletedUserId,
             p_subscription_id: null,
             p_status: 'inactive',
