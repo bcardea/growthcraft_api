@@ -20,9 +20,9 @@ export async function createCheckoutSession(req, res) {
       hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY
     });
 
-    // Get user details using raw SQL
+    // Get user details using RPC
     logger.info('Fetching user details for:', userId);
-    const { data: users, error: userError } = await supabase
+    const { data: user, error: userError } = await supabase
       .rpc('get_user_details', { user_id: userId });
 
     if (userError) {
@@ -30,12 +30,11 @@ export async function createCheckoutSession(req, res) {
       return res.status(400).json({ error: 'Error fetching user: ' + userError.message });
     }
 
-    if (!users) {
-      logger.error('User not found:', userId);
-      return res.status(404).json({ error: 'User not found' });
+    if (!user || !user.email) {
+      logger.error('User not found or missing email:', userId);
+      return res.status(404).json({ error: 'User not found or missing email' });
     }
 
-    const user = users;
     logger.info('User details retrieved:', { 
       hasEmail: !!user.email,
       hasStripeId: !!user.stripe_customer_id,
@@ -55,7 +54,7 @@ export async function createCheckoutSession(req, res) {
       customerId = customer.id;
       logger.info('Created Stripe customer:', customerId);
 
-      // Update user with Stripe customer ID using raw SQL
+      // Update user with Stripe customer ID
       logger.info('Updating user with Stripe customer ID');
       const { error: updateError } = await supabase
         .rpc('update_user_stripe_customer', {
@@ -125,7 +124,7 @@ export async function handleStripeWebhook(req, res) {
           return res.status(400).json({ error: 'No userId found' });
         }
 
-        // Update subscription status using raw SQL
+        // Update subscription status
         const { error: updateError } = await supabase
           .rpc('update_user_subscription', {
             user_id: userId,
@@ -153,7 +152,7 @@ export async function handleStripeWebhook(req, res) {
           return res.status(400).json({ error: 'No userId found' });
         }
 
-        // Update subscription status to inactive using raw SQL
+        // Update subscription status to inactive
         const { error: deleteError } = await supabase
           .rpc('update_user_subscription', {
             user_id: deletedUserId,
