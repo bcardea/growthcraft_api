@@ -20,7 +20,17 @@ const app = express();
 // Stripe webhook needs raw body
 app.post('/api/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
-app.use(cors());
+// Configure CORS with specific options
+app.use(cors({
+  origin: [
+    'https://growthcraft.vercel.app',
+    'http://localhost:5173', // For local development
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(requestLogger);
 
