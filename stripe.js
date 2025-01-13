@@ -81,6 +81,7 @@ export async function createCheckoutSession(req, res) {
         },
       ],
       mode: 'subscription',
+      allow_promotion_codes: true,
       success_url: returnUrl || `${process.env.VITE_APP_URL}/company-setup?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.VITE_APP_URL}/billing-setup`,
     });
