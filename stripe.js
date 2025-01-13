@@ -20,10 +20,11 @@ export async function createCheckoutSession(req, res) {
       hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY
     });
 
-    // Get user details directly from auth.users
+    // Get user details from auth.users schema
     logger.info('Fetching user details for:', userId);
     const { data: users, error: userError } = await supabase
-      .from('auth.users')
+      .schema('auth')
+      .from('users')
       .select('email, stripe_customer_id, subscription_status, subscription_period_end')
       .eq('id', userId)
       .single();
@@ -61,7 +62,8 @@ export async function createCheckoutSession(req, res) {
       // Update user with Stripe customer ID
       logger.info('Updating user with Stripe customer ID');
       const { error: updateError } = await supabase
-        .from('auth.users')
+        .schema('auth')
+        .from('users')
         .update({ stripe_customer_id: customerId })
         .eq('id', userId);
 
@@ -129,7 +131,8 @@ export async function handleStripeWebhook(req, res) {
 
         // Update subscription status
         const { error: updateError } = await supabase
-          .from('auth.users')
+          .schema('auth')
+          .from('users')
           .update({
             subscription_status: subscription.status,
             subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -158,7 +161,8 @@ export async function handleStripeWebhook(req, res) {
 
         // Update subscription status to inactive
         const { error: deleteError } = await supabase
-          .from('auth.users')
+          .schema('auth')
+          .from('users')
           .update({
             subscription_status: 'inactive',
             subscription_period_end: null,
