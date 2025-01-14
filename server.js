@@ -764,11 +764,15 @@ Guidelines:
       const rawContent = completion.choices[0].message.content;
       logger.info('Raw GPT response:', rawContent);
 
+      // Strip any markdown formatting before parsing
+      const cleanedContent = rawContent.replace(/```json\n|\n```|```/g, '').trim();
+      logger.info('Cleaned content:', cleanedContent);
+
       let socialPosts;
       try {
         logger.info('Attempting to parse GPT response...');
         // Try to parse the JSON response
-        socialPosts = JSON.parse(rawContent.trim());
+        socialPosts = JSON.parse(cleanedContent);
         logger.info('Successfully parsed social posts:', JSON.stringify(socialPosts, null, 2));
       } catch (parseError) {
         logger.error('Error parsing GPT response:', parseError);
