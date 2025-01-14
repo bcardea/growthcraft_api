@@ -771,7 +771,9 @@ Guidelines:
       let socialPosts;
       try {
         logger.info('Attempting to parse GPT response...');
-        // Try to parse the JSON response
+        // Clean and parse the JSON response
+        const cleanedContent = rawContent.replace(/```json\n|\n```|```/g, '').trim();
+        logger.info('Cleaned content:', cleanedContent);
         socialPosts = JSON.parse(cleanedContent);
         logger.info('Successfully parsed social posts:', JSON.stringify(socialPosts, null, 2));
       } catch (parseError) {
